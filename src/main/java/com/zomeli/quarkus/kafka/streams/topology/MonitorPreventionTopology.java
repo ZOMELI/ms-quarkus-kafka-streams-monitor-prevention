@@ -24,10 +24,15 @@ public class MonitorPreventionTopology {
   public void splitMessage(StreamsBuilder builder){
 //    Pattern pattern = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
 
-    KStream<String, String> source = builder.stream(configSource.getInTopic());
+    KStream<String, String> source = builder.stream(
+            configSource.getInTopic(),Consumed.with(Serdes.String(), Serdes.String()))
+            .peek((k,v) -> log.info("Message input: " + v));
+
     source.flatMapValues(value -> Arrays.asList(value.split("\\W+")))
-        .to(configSource.getOutTopic());
+            .peek((k,v) -> log.info("Message Split output:" + v))
+            .to(configSource.getOutTopic());
   }
+
 
   public void filterAndUpperCase(StreamsBuilder builder){
 
@@ -51,6 +56,7 @@ public class MonitorPreventionTopology {
         .mapValues(value -> value.getAdditionalData().getBusinessEvent().toString())
         .to(configSource.getOutTopic(), Produced.with(stringSerde, stringSerde));
   }
+
 
 
 
